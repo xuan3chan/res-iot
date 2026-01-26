@@ -1,0 +1,33 @@
+{
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "name": "database",
+    "sourceRoot": "libs/database/src",
+    "projectType": "library",
+    "targets": {
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": [
+                "{options.outputFile}"
+            ],
+            "options": {
+                "lintFilePatterns": [
+                    "libs/database/**/*.ts"
+                ]
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": [
+                "{workspaceRoot}/coverage/libs/database"
+            ],
+            "options": {
+                "jestConfig": "libs/database/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": [
+        "database",
+        "shared"
+    ]
+}

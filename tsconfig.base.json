@@ -1,0 +1,36 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "noUnusedLocals": false,
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "importHelpers": true,
+    "target": "ES2021",
+    "types": ["jest", "node"],
+    "module": "ESNext",
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["ES2021", "DOM"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@libs/api-client": ["libs/api-client/src/index.ts"],
+      "@libs/api-client/*": ["libs/api-client/src/*"],
+      "@libs/common": ["libs/common/src/index.ts"],
+      "@libs/common/*": ["libs/common/src/*"],
+      "@libs/database": ["libs/database/src/index.ts"],
+      "@libs/database/*": ["libs/database/src/*"],
+      "@libs/socket-events": ["libs/socket-events/src/index.ts"],
+      "@libs/socket-events/*": ["libs/socket-events/src/*"],
+      "@libs/types": ["libs/types/src/index.ts"],
+      "@libs/types/*": ["libs/types/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "tmp", "dist"]
+}

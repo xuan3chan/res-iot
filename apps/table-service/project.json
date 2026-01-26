@@ -1,0 +1,75 @@
+{
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "name": "table-service",
+    "sourceRoot": "apps/table-service/src",
+    "projectType": "application",
+    "targets": {
+        "build": {
+            "executor": "@nx/webpack:webpack",
+            "outputs": [
+                "{options.outputPath}"
+            ],
+            "defaultConfiguration": "production",
+            "options": {
+                "target": "node",
+                "compiler": "tsc",
+                "outputPath": "dist/apps/table-service",
+                "main": "apps/table-service/src/main.ts",
+                "tsConfig": "apps/table-service/tsconfig.app.json",
+                "webpackConfig": "apps/table-service/webpack.config.js",
+                "generatePackageJson": true
+            },
+            "configurations": {
+                "development": {
+                    "optimization": false,
+                    "sourceMap": true
+                },
+                "production": {
+                    "optimization": true,
+                    "extractLicenses": true,
+                    "inspect": false
+                }
+            }
+        },
+        "serve": {
+            "executor": "@nx/js:node",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "table-service:build"
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "table-service:build:development"
+                },
+                "production": {
+                    "buildTarget": "table-service:build:production"
+                }
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": [
+                "{options.outputFile}"
+            ],
+            "options": {
+                "lintFilePatterns": [
+                    "apps/table-service/**/*.ts"
+                ]
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": [
+                "{workspaceRoot}/coverage/apps/table-service"
+            ],
+            "options": {
+                "jestConfig": "apps/table-service/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": [
+        "service",
+        "table"
+    ]
+}

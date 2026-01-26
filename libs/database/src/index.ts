@@ -1,0 +1,33 @@
+// Database entities
+export * from './entities/user.entity';
+export * from './entities/category.entity';
+export * from './entities/menu-item.entity';
+export * from './entities/menu-item-modifier.entity';
+export * from './entities/modifier-option.entity';
+export * from './entities/table.entity';
+export * from './entities/table-session.entity';
+export * from './entities/order.entity';
+export * from './entities/order-item.entity';
+
+// Re-export all entities as array for TypeORM
+import { User } from './entities/user.entity';
+import { Category } from './entities/category.entity';
+import { MenuItem } from './entities/menu-item.entity';
+import { MenuItemModifier } from './entities/menu-item-modifier.entity';
+import { ModifierOption } from './entities/modifier-option.entity';
+import { Table } from './entities/table.entity';
+import { TableSession } from './entities/table-session.entity';
+import { Order } from './entities/order.entity';
+import { OrderItem } from './entities/order-item.entity';
+
+export const entities = [
+    User,
+    Category,
+    MenuItem,
+    MenuItemModifier,
+    ModifierOption,
+    Table,
+    TableSession,
+    Order,
+    OrderItem,
+];

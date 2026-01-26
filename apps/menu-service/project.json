@@ -1,0 +1,75 @@
+{
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "name": "menu-service",
+    "sourceRoot": "apps/menu-service/src",
+    "projectType": "application",
+    "targets": {
+        "build": {
+            "executor": "@nx/webpack:webpack",
+            "outputs": [
+                "{options.outputPath}"
+            ],
+            "defaultConfiguration": "production",
+            "options": {
+                "target": "node",
+                "compiler": "tsc",
+                "outputPath": "dist/apps/menu-service",
+                "main": "apps/menu-service/src/main.ts",
+                "tsConfig": "apps/menu-service/tsconfig.app.json",
+                "webpackConfig": "apps/menu-service/webpack.config.js",
+                "generatePackageJson": true
+            },
+            "configurations": {
+                "development": {
+                    "optimization": false,
+                    "sourceMap": true
+                },
+                "production": {
+                    "optimization": true,
+                    "extractLicenses": true,
+                    "inspect": false
+                }
+            }
+        },
+        "serve": {
+            "executor": "@nx/js:node",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "menu-service:build"
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "menu-service:build:development"
+                },
+                "production": {
+                    "buildTarget": "menu-service:build:production"
+                }
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": [
+                "{options.outputFile}"
+            ],
+            "options": {
+                "lintFilePatterns": [
+                    "apps/menu-service/**/*.ts"
+                ]
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": [
+                "{workspaceRoot}/coverage/apps/menu-service"
+            ],
+            "options": {
+                "jestConfig": "apps/menu-service/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": [
+        "service",
+        "menu"
+    ]
+}

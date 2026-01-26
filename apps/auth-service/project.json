@@ -1,0 +1,75 @@
+{
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "name": "auth-service",
+    "sourceRoot": "apps/auth-service/src",
+    "projectType": "application",
+    "targets": {
+        "build": {
+            "executor": "@nx/webpack:webpack",
+            "outputs": [
+                "{options.outputPath}"
+            ],
+            "defaultConfiguration": "production",
+            "options": {
+                "target": "node",
+                "compiler": "tsc",
+                "outputPath": "dist/apps/auth-service",
+                "main": "apps/auth-service/src/main.ts",
+                "tsConfig": "apps/auth-service/tsconfig.app.json",
+                "webpackConfig": "apps/auth-service/webpack.config.js",
+                "generatePackageJson": true
+            },
+            "configurations": {
+                "development": {
+                    "optimization": false,
+                    "sourceMap": true
+                },
+                "production": {
+                    "optimization": true,
+                    "extractLicenses": true,
+                    "inspect": false
+                }
+            }
+        },
+        "serve": {
+            "executor": "@nx/js:node",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "auth-service:build"
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "auth-service:build:development"
+                },
+                "production": {
+                    "buildTarget": "auth-service:build:production"
+                }
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": [
+                "{options.outputFile}"
+            ],
+            "options": {
+                "lintFilePatterns": [
+                    "apps/auth-service/**/*.ts"
+                ]
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": [
+                "{workspaceRoot}/coverage/apps/auth-service"
+            ],
+            "options": {
+                "jestConfig": "apps/auth-service/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": [
+        "service",
+        "auth"
+    ]
+}

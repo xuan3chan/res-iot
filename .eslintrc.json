@@ -1,0 +1,40 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "project": "**/tsconfig.base.json"
+    },
+    "ignorePatterns": [
+        "**/*"
+    ],
+    "plugins": [
+        "@typescript-eslint",
+        "@nx"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier"
+    ],
+    "rules": {
+        "no-console": "off",
+        "camelcase": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/explicit-member-accessibility": "off",
+        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/interface-name-prefix": "off",
+        "@typescript-eslint/no-empty-interface": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@nx/enforce-module-boundaries": "off"
+    },
+    "overrides": [
+        {
+            "files": [
+                "*.ts"
+            ],
+            "rules": {}
+        }
+    ]
+}
