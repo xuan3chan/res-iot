@@ -6,37 +6,22 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export enum UserRole {
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  KITCHEN_STAFF = 'kitchen_staff',
-  WAITER = 'waiter',
-  CUSTOMER = 'customer',
-}
-
-@Entity('users')
-export class User {
+@Entity('admins')
+export class Admin {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ unique: true, length: 255 })
   email: string;
 
-  @Column({ unique: true, length: 100, nullable: true })
-  username: string | null;
+  @Column({ unique: true, length: 100 })
+  username: string;
 
   @Column()
   password: string;
 
   @Column({ length: 100 })
   name: string;
-
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.CUSTOMER,
-  })
-  role: UserRole;
 
   @Column({ default: true })
   isActive: boolean;
