@@ -15,9 +15,18 @@ export class LoginAdminHandler implements ICommandHandler<LoginAdminCommand, Adm
 
   async execute(command: LoginAdminCommand): Promise<AdminAuthResponseDto> {
     const { loginDto } = command;
+    console.log(JSON.stringify(loginDto));
+    if (!loginDto.password) {
+      throw new UnauthorizedException('Password is required');
+    }
+
     const admin = await this.adminRepository.findByEmail(loginDto.email);
     if (!admin) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!admin.password) {
+      throw new UnauthorizedException('Invalid credentials (internal error: password missing)');
     }
 
     const isPasswordValid = await bcrypt.compare(loginDto.password, admin.password);

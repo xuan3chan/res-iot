@@ -3,8 +3,10 @@ import { Inject, NotFoundException } from '@nestjs/common';
 import { DeleteAdminCommand } from './delete-admin.command';
 import { IAdminRepository } from '../../../../infrastructure/interfaces/admin.repository.interface';
 
+import { DeleteAdminResult } from './delete-admin.result';
+
 @CommandHandler(DeleteAdminCommand)
-export class DeleteAdminHandler implements ICommandHandler<DeleteAdminCommand, void> {
+export class DeleteAdminHandler implements ICommandHandler<DeleteAdminCommand, DeleteAdminResult> {
   constructor(
     @Inject('IAdminRepository')
     private readonly adminRepository: IAdminRepository

@@ -12,6 +12,8 @@ import { GetUserQuery } from '../../application/queries/user/get-user/get-user.q
 import { GetUsersQuery } from '../../application/queries/user/get-users/get-users.query';
 import { RegisterFaceCommand } from '../../application/commands/face/register-face/register-face.command';
 import { VerifyFaceCommand } from '../../application/commands/face/verify-face/verify-face.command';
+import { FaceLoginCommand } from '../../application/commands/face/face-login/face-login.command';
+import { RegisterAdminFaceCommand } from '../../application/commands/face/register-admin-face/register-admin-face.command';
 import { GetAdminQuery } from '../../application/queries/admin/get-admin/get-admin.query';
 import { GetAdminsQuery } from '../../application/queries/admin/get-admins/get-admins.query';
 import { CreateAdminCommand } from '../../application/commands/admin/create-admin/create-admin.command';
@@ -29,6 +31,7 @@ export class KafkaController {
   // Auth handlers
   @MessagePattern(KAFKA_TOPICS.AUTH.LOGIN)
   async handleLogin(@Payload() data: { email: string; password: string }) {
+    console.log('handleLogin payload:', JSON.stringify(data));
     try {
       return await this.commandBus.execute(new LoginAdminCommand(data));
     } catch (error) {
@@ -38,6 +41,7 @@ export class KafkaController {
 
   @MessagePattern(KAFKA_TOPICS.AUTH.REGISTER)
   async handleRegister(@Payload() data: any) {
+    console.log('handleRegister payload:', JSON.stringify(data));
     try {
       return await this.commandBus.execute(new RegisterAdminCommand(data));
     } catch (error) {
@@ -47,6 +51,7 @@ export class KafkaController {
 
   @MessagePattern(KAFKA_TOPICS.AUTH.USER_LOGIN)
   async handleUserLogin(@Payload() data: any) {
+    console.log('handleUserLogin payload:', JSON.stringify(data));
     try {
       return await this.commandBus.execute(new LoginUserCommand(data));
     } catch (error) {
@@ -56,6 +61,7 @@ export class KafkaController {
 
   @MessagePattern(KAFKA_TOPICS.AUTH.USER_REGISTER)
   async handleUserRegister(@Payload() data: any) {
+    console.log('handleUserRegister payload:', JSON.stringify(data));
     try {
       return await this.commandBus.execute(new RegisterUserCommand(data));
     } catch (error) {
@@ -134,6 +140,33 @@ export class KafkaController {
     }
   }
 
+  @MessagePattern(KAFKA_TOPICS.AUTH.FACE_LOGIN)
+  async handleFaceLogin(
+    @Payload()
+    data: {
+      frames: string[];
+      challengeType: 'BLINK' | 'TURN_HEAD' | 'OPEN_MOUTH' | 'READ_NUMBER';
+      challengePassed: boolean;
+      ipAddress: string;
+      deviceId?: string;
+    }
+  ) {
+    console.log('handleFaceLogin payload received');
+    try {
+      return await this.commandBus.execute(
+        new FaceLoginCommand(
+          data.frames,
+          data.challengeType,
+          data.challengePassed,
+          data.ipAddress,
+          data.deviceId
+        )
+      );
+    } catch (error) {
+      return { error: error.message, statusCode: error.status || 500 };
+    }
+  }
+
   // Admin handlers
   @MessagePattern(KAFKA_TOPICS.ADMIN.CREATE)
   async handleCreateAdmin(@Payload() data: any) {
@@ -177,6 +210,15 @@ export class KafkaController {
     try {
       await this.commandBus.execute(new DeleteAdminCommand(data.id));
       return { message: 'Admin deleted successfully' };
+    } catch (error) {
+      return { error: error.message, statusCode: error.status || 500 };
+    }
+  }
+
+  @MessagePattern(KAFKA_TOPICS.ADMIN.REGISTER_FACE)
+  async handleRegisterAdminFace(@Payload() data: { id: string; file: any }) {
+    try {
+      return await this.commandBus.execute(new RegisterAdminFaceCommand(data.id, data.file));
     } catch (error) {
       return { error: error.message, statusCode: error.status || 500 };
     }

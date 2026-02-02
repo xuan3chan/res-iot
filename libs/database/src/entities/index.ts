@@ -8,3 +8,4 @@ export * from './order.entity';
 export * from './order-item.entity';
 export * from './user.entity';
 export * from './admin.entity';
+export * from './face-login-attempt.entity';

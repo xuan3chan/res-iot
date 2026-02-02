@@ -50,3 +50,6 @@ apps/*/.env.*
 
 # Nx
 .nx
+#agent
+/.agent
+/.claude

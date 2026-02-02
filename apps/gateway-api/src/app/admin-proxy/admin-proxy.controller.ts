@@ -11,9 +11,12 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { lastValueFrom } from 'rxjs';
 import { KAFKA_TOPICS, UpdateAdminDto, RegisterAdminDto } from '@libs/common';
 
@@ -30,6 +33,7 @@ export class AdminProxyController implements OnModuleInit {
     this.authClient.subscribeToResponseOf(KAFKA_TOPICS.ADMIN.FIND_ONE);
     this.authClient.subscribeToResponseOf(KAFKA_TOPICS.ADMIN.UPDATE);
     this.authClient.subscribeToResponseOf(KAFKA_TOPICS.ADMIN.DELETE);
+    this.authClient.subscribeToResponseOf(KAFKA_TOPICS.ADMIN.REGISTER_FACE);
     await this.authClient.connect();
   }
 
@@ -64,5 +68,22 @@ export class AdminProxyController implements OnModuleInit {
   @ApiOperation({ summary: 'Delete admin' })
   async deleteAdmin(@Param('id') id: string) {
     return lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.DELETE, { id }));
+  }
+
+  @Post(':id/register-face')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Register face for admin' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async registerFace(@Param('id') id: string, @UploadedFile() file: any) {
+    const payload = { id, file: { buffer: file.buffer, originalname: file.originalname } };
+    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.REGISTER_FACE, payload));
   }
 }

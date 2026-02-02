@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User, Admin } from '@libs/database';
+import { User, Admin, FaceLoginAttempt } from '@libs/database';
 
 import { KafkaController } from './kafka.controller';
 import { UserTypeOrmRepository } from '../repositories/user.repository';
@@ -15,6 +15,8 @@ import { UpdateUserHandler } from '../../application/commands/user/update-user/u
 import { DeleteUserHandler } from '../../application/commands/user/delete-user/delete-user.handler';
 import { RegisterFaceHandler } from '../../application/commands/face/register-face/register-face.handler';
 import { VerifyFaceHandler } from '../../application/commands/face/verify-face/verify-face.handler';
+import { FaceLoginHandler } from '../../application/commands/face/face-login/face-login.handler';
+import { RegisterAdminFaceHandler } from '../../application/commands/face/register-admin-face/register-admin-face.handler';
 import { FaceModule } from '../face/face.module';
 
 // User Queries
@@ -32,6 +34,8 @@ const CommandHandlers = [
   DeleteUserHandler,
   RegisterFaceHandler,
   VerifyFaceHandler,
+  FaceLoginHandler,
+  RegisterAdminFaceHandler,
 ];
 
 const QueryHandlers = [GetUserHandler, GetUsersHandler];
@@ -39,7 +43,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
 @Module({
   imports: [
     CqrsModule,
-    TypeOrmModule.forFeature([User, Admin]),
+    TypeOrmModule.forFeature([User, Admin, FaceLoginAttempt]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

@@ -9,6 +9,7 @@ export * from './entities/table.entity';
 export * from './entities/table-session.entity';
 export * from './entities/order.entity';
 export * from './entities/order-item.entity';
+export * from './entities/face-login-attempt.entity';
 
 // Re-export all entities as array for TypeORM
 import { User } from './entities/user.entity';
@@ -21,6 +22,7 @@ import { Table } from './entities/table.entity';
 import { TableSession } from './entities/table-session.entity';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
+import { FaceLoginAttempt } from './entities/face-login-attempt.entity';
 
 export const entities = [
   User,
@@ -33,4 +35,5 @@ export const entities = [
   TableSession,
   Order,
   OrderItem,
+  FaceLoginAttempt,
 ];

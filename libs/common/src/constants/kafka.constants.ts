@@ -5,6 +5,7 @@ export const KAFKA_TOPICS = {
     REGISTER: 'auth.admin_register',
     USER_LOGIN: 'auth.user_login',
     USER_REGISTER: 'auth.user_register',
+    FACE_LOGIN: 'auth.face-login', // Moved here - authentication for both User and Admin
   },
   USER: {
     CREATE: 'user.create',
@@ -21,5 +22,6 @@ export const KAFKA_TOPICS = {
     FIND_ONE: 'admin.findOne',
     UPDATE: 'admin.update',
     DELETE: 'admin.delete',
+    REGISTER_FACE: 'admin.register-face',
   },
 } as const;

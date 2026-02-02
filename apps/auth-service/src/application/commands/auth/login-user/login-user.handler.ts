@@ -15,9 +15,17 @@ export class LoginUserHandler implements ICommandHandler<LoginUserCommand, Login
 
   async execute(command: LoginUserCommand): Promise<LoginUserResult> {
     const { loginDto } = command;
+    if (!loginDto.password) {
+      throw new UnauthorizedException('Password is required');
+    }
+
     const user = await this.userRepository.findByEmail(loginDto.email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.password) {
+      throw new UnauthorizedException('Invalid credentials (internal error: password missing)');
     }
 
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);

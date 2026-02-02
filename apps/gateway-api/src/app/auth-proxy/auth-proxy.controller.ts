@@ -12,17 +12,20 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+  Req,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { lastValueFrom } from 'rxjs';
+import { Request } from 'express';
 
 import {
   LoginDto,
   RegisterAdminDto,
   CreateUserDto,
   UpdateUserDto,
+  FaceLoginDto,
   KAFKA_TOPICS,
 } from '@libs/common';
 
@@ -45,6 +48,7 @@ export class AuthProxyController implements OnModuleInit {
     this.authClient.subscribeToResponseOf(KAFKA_TOPICS.USER.DELETE);
     this.authClient.subscribeToResponseOf(KAFKA_TOPICS.USER.REGISTER_FACE);
     this.authClient.subscribeToResponseOf(KAFKA_TOPICS.USER.VERIFY_FACE);
+    this.authClient.subscribeToResponseOf(KAFKA_TOPICS.AUTH.FACE_LOGIN);
     await this.authClient.connect();
   }
 
@@ -52,7 +56,8 @@ export class AuthProxyController implements OnModuleInit {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin Login' })
   async login(@Body() loginDto: LoginDto) {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.LOGIN, loginDto));
+    const payload = { ...loginDto };
+    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.LOGIN, payload));
   }
 
   @Post('register')
@@ -82,6 +87,19 @@ export class AuthProxyController implements OnModuleInit {
   @ApiOperation({ summary: 'Logout' })
   async logout() {
     return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.LOGOUT, {}));
+  }
+
+  @Post('face-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Face Login with Liveness Detection' })
+  @ApiBody({ type: FaceLoginDto })
+  async faceLogin(@Body() faceLoginDto: FaceLoginDto, @Req() req: Request) {
+    const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+    const payload = {
+      ...faceLoginDto,
+      ipAddress,
+    };
+    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.FACE_LOGIN, payload));
   }
 }
 
