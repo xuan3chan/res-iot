@@ -3,17 +3,18 @@ import { Inject, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginAdminCommand } from './login-admin.command';
-import { AdminAuthResponseDto, AdminResponseDto } from '@libs/common';
+import { AdminResponseDto } from '@libs/common';
 import { IAdminRepository } from '../../../../infrastructure/interfaces/admin.repository.interface';
+import { LoginAdminResult } from './login-admin.result';
 
 @CommandHandler(LoginAdminCommand)
-export class LoginAdminHandler implements ICommandHandler<LoginAdminCommand, AdminAuthResponseDto> {
+export class LoginAdminHandler implements ICommandHandler<LoginAdminCommand, LoginAdminResult> {
   constructor(
     @Inject('IAdminRepository') private readonly adminRepository: IAdminRepository,
     private readonly jwtService: JwtService
   ) {}
 
-  async execute(command: LoginAdminCommand): Promise<AdminAuthResponseDto> {
+  async execute(command: LoginAdminCommand): Promise<LoginAdminResult> {
     const { loginDto } = command;
     console.log(JSON.stringify(loginDto));
     if (!loginDto.password) {
@@ -38,7 +39,7 @@ export class LoginAdminHandler implements ICommandHandler<LoginAdminCommand, Adm
     const accessToken = this.jwtService.sign(payload);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...adminWithoutPassword } = admin;
+    const { password,faceVector, ...adminWithoutPassword } = admin;
 
     return {
       accessToken,

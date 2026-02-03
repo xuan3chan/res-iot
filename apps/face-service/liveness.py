@@ -63,7 +63,7 @@ class LivenessDetector:
             
             # Resize for speed
             f1 = cv2.resize(f1, (100, 100))
-            f2 = cv2.resize(f1, (100, 100))
+            f2 = cv2.resize(f2, (100, 100))
             
             diff = cv2.absdiff(f1, f2)
             diffs.append(np.mean(diff))

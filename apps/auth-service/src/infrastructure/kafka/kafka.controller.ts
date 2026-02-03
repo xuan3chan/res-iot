@@ -2,6 +2,8 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { KAFKA_TOPICS } from '@libs/common';
+import { instanceToPlain } from 'class-transformer';
+
 import { LoginAdminCommand } from '../../application/commands/auth/login-admin/login-admin.command';
 import { LoginUserCommand } from '../../application/commands/auth/login-user/login-user.command';
 import { RegisterUserCommand } from '../../application/commands/auth/register-user/register-user.command';
@@ -28,44 +30,61 @@ export class KafkaController {
     private readonly queryBus: QueryBus
   ) {}
 
+  private formatError(error: any) {
+    // If it's a NestJS HttpException or similar
+    const message = error.response?.message || error.message || 'Internal server error';
+    const statusCode = error.status || error.response?.statusCode || 500;
+
+    return {
+      error: message,
+      statusCode: statusCode,
+      details: error.response || error,
+    };
+  }
+
+  private formatResponse(data: any) {
+    // Ensure it's a plain object for Kafka serialization
+    return instanceToPlain(data);
+  }
+
   // Auth handlers
   @MessagePattern(KAFKA_TOPICS.AUTH.LOGIN)
   async handleLogin(@Payload() data: { email: string; password: string }) {
-    console.log('handleLogin payload:', JSON.stringify(data));
     try {
-      return await this.commandBus.execute(new LoginAdminCommand(data));
+      const result = await this.commandBus.execute(new LoginAdminCommand(data));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.AUTH.REGISTER)
   async handleRegister(@Payload() data: any) {
-    console.log('handleRegister payload:', JSON.stringify(data));
     try {
-      return await this.commandBus.execute(new RegisterAdminCommand(data));
+      const result = await this.commandBus.execute(new RegisterAdminCommand(data));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.AUTH.USER_LOGIN)
   async handleUserLogin(@Payload() data: any) {
-    console.log('handleUserLogin payload:', JSON.stringify(data));
     try {
-      return await this.commandBus.execute(new LoginUserCommand(data));
+      const result = await this.commandBus.execute(new LoginUserCommand(data));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.AUTH.USER_REGISTER)
   async handleUserRegister(@Payload() data: any) {
-    console.log('handleUserRegister payload:', JSON.stringify(data));
     try {
-      return await this.commandBus.execute(new RegisterUserCommand(data));
+      const result = await this.commandBus.execute(new RegisterUserCommand(data));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
@@ -78,27 +97,30 @@ export class KafkaController {
   @MessagePattern(KAFKA_TOPICS.USER.CREATE)
   async handleCreateUser(@Payload() data: any) {
     try {
-      return await this.commandBus.execute(new CreateUserCommand(data));
+      const result = await this.commandBus.execute(new CreateUserCommand(data));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.USER.FIND_ALL)
   async handleFindAllUsers() {
     try {
-      return await this.queryBus.execute(new GetUsersQuery());
+      const result = await this.queryBus.execute(new GetUsersQuery());
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.USER.FIND_ONE)
   async handleFindOneUser(@Payload() data: { id: string }) {
     try {
-      return await this.queryBus.execute(new GetUserQuery(data.id));
+      const result = await this.queryBus.execute(new GetUserQuery(data.id));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
@@ -106,9 +128,10 @@ export class KafkaController {
   async handleUpdateUser(@Payload() data: { id: string; [key: string]: any }) {
     try {
       const { id, ...updateData } = data;
-      return await this.commandBus.execute(new UpdateUserCommand(id, updateData));
+      const result = await this.commandBus.execute(new UpdateUserCommand(id, updateData));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
@@ -118,25 +141,27 @@ export class KafkaController {
       await this.commandBus.execute(new DeleteUserCommand(data.id));
       return { message: 'User deleted successfully' };
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.USER.REGISTER_FACE)
   async handleRegisterFace(@Payload() data: { id: string; file: any }) {
     try {
-      return await this.commandBus.execute(new RegisterFaceCommand(data.id, data.file));
+      const result = await this.commandBus.execute(new RegisterFaceCommand(data.id, data.file));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.USER.VERIFY_FACE)
   async handleVerifyFace(@Payload() data: { file: any }) {
     try {
-      return await this.commandBus.execute(new VerifyFaceCommand(data.file));
+      const result = await this.commandBus.execute(new VerifyFaceCommand(data.file));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
@@ -151,9 +176,8 @@ export class KafkaController {
       deviceId?: string;
     }
   ) {
-    console.log('handleFaceLogin payload received');
     try {
-      return await this.commandBus.execute(
+      const result = await this.commandBus.execute(
         new FaceLoginCommand(
           data.frames,
           data.challengeType,
@@ -162,8 +186,9 @@ export class KafkaController {
           data.deviceId
         )
       );
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
@@ -171,27 +196,30 @@ export class KafkaController {
   @MessagePattern(KAFKA_TOPICS.ADMIN.CREATE)
   async handleCreateAdmin(@Payload() data: any) {
     try {
-      return await this.commandBus.execute(new CreateAdminCommand(data));
+      const result = await this.commandBus.execute(new CreateAdminCommand(data));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.ADMIN.FIND_ALL)
   async handleFindAllAdmins() {
     try {
-      return await this.queryBus.execute(new GetAdminsQuery());
+      const result = await this.queryBus.execute(new GetAdminsQuery());
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.ADMIN.FIND_ONE)
   async handleFindOneAdmin(@Payload() data: { id: string }) {
     try {
-      return await this.queryBus.execute(new GetAdminQuery(data.id));
+      const result = await this.queryBus.execute(new GetAdminQuery(data.id));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
@@ -199,9 +227,10 @@ export class KafkaController {
   async handleUpdateAdmin(@Payload() data: { id: string; [key: string]: any }) {
     try {
       const { id, ...updateData } = data;
-      return await this.commandBus.execute(new UpdateAdminCommand(id, updateData));
+      const result = await this.commandBus.execute(new UpdateAdminCommand(id, updateData));
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
@@ -211,16 +240,19 @@ export class KafkaController {
       await this.commandBus.execute(new DeleteAdminCommand(data.id));
       return { message: 'Admin deleted successfully' };
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 
   @MessagePattern(KAFKA_TOPICS.ADMIN.REGISTER_FACE)
   async handleRegisterAdminFace(@Payload() data: { id: string; file: any }) {
     try {
-      return await this.commandBus.execute(new RegisterAdminFaceCommand(data.id, data.file));
+      const result = await this.commandBus.execute(
+        new RegisterAdminFaceCommand(data.id, data.file)
+      );
+      return this.formatResponse(result);
     } catch (error) {
-      return { error: error.message, statusCode: error.status || 500 };
+      return this.formatError(error);
     }
   }
 }

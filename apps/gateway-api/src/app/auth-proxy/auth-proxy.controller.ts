@@ -13,9 +13,17 @@ import {
   UseInterceptors,
   UploadedFile,
   Req,
+  HttpException,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { lastValueFrom } from 'rxjs';
 import { Request } from 'express';
@@ -52,19 +60,28 @@ export class AuthProxyController implements OnModuleInit {
     await this.authClient.connect();
   }
 
+  private handleResponse(result: any) {
+    if (result && result.error) {
+      throw new HttpException(result.error, result.statusCode || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    return result;
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin Login' })
   async login(@Body() loginDto: LoginDto) {
     const payload = { ...loginDto };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.LOGIN, payload));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.LOGIN, payload));
+    return this.handleResponse(result);
   }
 
   @Post('register')
   @ApiOperation({ summary: 'Admin Register' })
   async register(@Body() registerDto: RegisterAdminDto) {
     const payload = { ...registerDto };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.REGISTER, payload));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.REGISTER, payload));
+    return this.handleResponse(result);
   }
 
   @Post('user/login')
@@ -72,14 +89,18 @@ export class AuthProxyController implements OnModuleInit {
   @ApiOperation({ summary: 'User Login' })
   async loginUser(@Body() loginDto: LoginDto) {
     const payload = { ...loginDto };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.USER_LOGIN, payload));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.USER_LOGIN, payload));
+    return this.handleResponse(result);
   }
 
   @Post('user/register')
   @ApiOperation({ summary: 'User Register' })
   async registerUser(@Body() createUserDto: CreateUserDto) {
     const payload = { ...createUserDto };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.USER_REGISTER, payload));
+    const result = await lastValueFrom(
+      this.authClient.send(KAFKA_TOPICS.AUTH.USER_REGISTER, payload)
+    );
+    return this.handleResponse(result);
   }
 
   @Post('logout')
@@ -99,7 +120,8 @@ export class AuthProxyController implements OnModuleInit {
       ...faceLoginDto,
       ipAddress,
     };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.FACE_LOGIN, payload));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.AUTH.FACE_LOGIN, payload));
+    return this.handleResponse(result);
   }
 }
 
@@ -112,37 +134,49 @@ export class UserProxyController implements OnModuleInit {
     await this.authClient.connect();
   }
 
+  private handleResponse(result: any) {
+    if (result && result.error) {
+      throw new HttpException(result.error, result.statusCode || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    return result;
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create User' })
   async createUser(@Body() createUserDto: CreateUserDto) {
     const payload = { ...createUserDto };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.CREATE, payload));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.CREATE, payload));
+    return this.handleResponse(result);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })
   async getUsers() {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.FIND_ALL, {}));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.FIND_ALL, {}));
+    return this.handleResponse(result);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
   async getUser(@Param('id') id: string) {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.FIND_ONE, { id }));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.FIND_ONE, { id }));
+    return this.handleResponse(result);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update user' })
   async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     const payload = { id, ...updateUserDto };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.UPDATE, payload));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.UPDATE, payload));
+    return this.handleResponse(result);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete user' })
   async deleteUser(@Param('id') id: string) {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.DELETE, { id }));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.DELETE, { id }));
+    return this.handleResponse(result);
   }
 
   @Post(':id/register-face')
@@ -159,7 +193,10 @@ export class UserProxyController implements OnModuleInit {
   })
   async registerFace(@Param('id') id: string, @UploadedFile() file: any) {
     const payload = { id, file: { buffer: file.buffer, originalname: file.originalname } };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.USER.REGISTER_FACE, payload));
+    const result = await lastValueFrom(
+      this.authClient.send(KAFKA_TOPICS.USER.REGISTER_FACE, payload)
+    );
+    return this.handleResponse(result);
   }
 
   @Post('verify-face')
@@ -175,7 +212,7 @@ export class UserProxyController implements OnModuleInit {
     },
   })
   async verifyFace(@UploadedFile() file: any) {
-    return lastValueFrom(
+    const result = await lastValueFrom(
       this.authClient.send(KAFKA_TOPICS.USER.VERIFY_FACE, {
         file: {
           buffer: file.buffer,
@@ -183,5 +220,6 @@ export class UserProxyController implements OnModuleInit {
         },
       })
     );
+    return this.handleResponse(result);
   }
 }

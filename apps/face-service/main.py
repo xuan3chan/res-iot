@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -44,6 +45,23 @@ app = FastAPI(
 # Register Rate Limit Exception handler
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Handle validation errors without crashing on binary data.
+    FastAPI's default handler tries to decode bytes to UTF-8, which fails for images.
+    """
+    errors = exc.errors()
+    # Sanitize errors to remove binary 'input' values that cause UnicodeDecodeError
+    for error in errors:
+        if "input" in error and isinstance(error["input"], bytes):
+            error["input"] = "<binary data>"
+            
+    return JSONResponse(
+        status_code=422,
+        content={"detail": errors},
+    )
 
 # Initialize face analysis model
 face_app = None

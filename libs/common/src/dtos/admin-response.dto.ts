@@ -20,5 +20,8 @@ export class AdminResponseDto {
   createdAt: Date;
 
   @ApiProperty()
+  hasFaceRegistered: boolean;
+
+  @ApiProperty()
   updatedAt: Date;
 }

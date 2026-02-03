@@ -204,6 +204,19 @@ export class FaceVerificationService {
     return {
       success: decision === 'LOGIN_SUCCESS',
       decision,
+      user:
+        decision === 'LOGIN_SUCCESS'
+          ? {
+              id: account.id,
+              email: account.email,
+              username: account.username,
+              name: account.name,
+              role: account.type === 'ADMIN' ? 'admin' : account['role'],
+              hasFaceRegistered: account.hasFaceRegistered,
+              createdAt: account.createdAt,
+              updatedAt: account.updatedAt,
+            }
+          : undefined,
       userId: account.id,
       userName: account.name,
       role: account.type === 'ADMIN' ? 'admin' : account['role'], // Return unified role
@@ -275,19 +288,22 @@ export class FaceVerificationService {
   }
 
   private async extractVector(imageBuffer: Buffer, filename: string): Promise<number[] | null> {
-    const form = new FormData();
-    form.append('file', imageBuffer, { filename });
+    const payload = {
+      frames: [imageBuffer.toString('base64')],
+    };
 
     try {
-      const response = await axios.post(`${this.faceServiceUrl}/extract-vector`, form, {
-        headers: {
-          ...form.getHeaders(),
-        },
-      });
-      return response.data;
+      const response = await axios.post(`${this.faceServiceUrl}/extract-vector`, payload);
+      // Face service returns { vector: number[], frame_index: number }
+      return response.data.vector;
     } catch (error) {
-      console.error('Face Service Error:', error.message);
-      throw new HttpException('Failed to process face image', HttpStatus.BAD_GATEWAY);
+      const errorDetail = error.response?.data?.detail;
+      const errorMessage = Array.isArray(errorDetail)
+        ? JSON.stringify(errorDetail)
+        : errorDetail || error.message;
+
+      console.error('Face Service Error:', errorMessage);
+      throw new HttpException(`Face Service Error: ${errorMessage}`, HttpStatus.BAD_GATEWAY);
     }
   }
 

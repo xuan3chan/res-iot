@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User, Admin } from '@libs/database';
+import { User, Admin, FaceLoginAttempt } from '@libs/database';
 import { AuthModule } from './presentation/controllers/auth/auth.module';
 import { UserModule } from './presentation/controllers/user/user.module';
 import { KafkaModule } from './infrastructure/kafka/kafka.module';
@@ -18,7 +18,7 @@ import { KafkaModule } from './infrastructure/kafka/kafka.module';
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
         password: configService.get<string>('DB_PASSWORD'),
-        entities: [User, Admin],
+        entities: [User, Admin, FaceLoginAttempt],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',
       }),

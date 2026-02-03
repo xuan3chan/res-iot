@@ -15,10 +15,18 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { lastValueFrom } from 'rxjs';
-import { KAFKA_TOPICS, UpdateAdminDto, RegisterAdminDto } from '@libs/common';
+import { HttpException } from '@nestjs/common';
+import { KAFKA_TOPICS, UpdateAdminDto, RegisterAdminDto, AdminResponseDto } from '@libs/common';
 
 @ApiTags('Admins')
 @Controller('admins')
@@ -37,43 +45,58 @@ export class AdminProxyController implements OnModuleInit {
     await this.authClient.connect();
   }
 
+  private handleResponse(result: any) {
+    if (result && result.error) {
+      throw new HttpException(result.error, result.statusCode || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    return result;
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create admin' })
   async createAdmin(@Body() registerDto: RegisterAdminDto) {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.CREATE, registerDto));
+    const result = await lastValueFrom(
+      this.authClient.send(KAFKA_TOPICS.ADMIN.CREATE, registerDto)
+    );
+    return this.handleResponse(result);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all admins' })
   async getAdmins() {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.FIND_ALL, {}));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.FIND_ALL, {}));
+    return this.handleResponse(result);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get admin by ID' })
   async getAdmin(@Param('id') id: string) {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.FIND_ONE, { id }));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.FIND_ONE, { id }));
+    return this.handleResponse(result);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update admin' })
   async updateAdmin(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
-    return lastValueFrom(
+    const result = await lastValueFrom(
       this.authClient.send(KAFKA_TOPICS.ADMIN.UPDATE, { id, ...updateAdminDto })
     );
+    return this.handleResponse(result);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete admin' })
   async deleteAdmin(@Param('id') id: string) {
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.DELETE, { id }));
+    const result = await lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.DELETE, { id }));
+    return this.handleResponse(result);
   }
 
   @Post(':id/register-face')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Register face for admin' })
+  @ApiResponse({ type: AdminResponseDto })
   @ApiBody({
     schema: {
       type: 'object',
@@ -84,6 +107,9 @@ export class AdminProxyController implements OnModuleInit {
   })
   async registerFace(@Param('id') id: string, @UploadedFile() file: any) {
     const payload = { id, file: { buffer: file.buffer, originalname: file.originalname } };
-    return lastValueFrom(this.authClient.send(KAFKA_TOPICS.ADMIN.REGISTER_FACE, payload));
+    const result = await lastValueFrom(
+      this.authClient.send(KAFKA_TOPICS.ADMIN.REGISTER_FACE, payload)
+    );
+    return this.handleResponse(result);
   }
 }

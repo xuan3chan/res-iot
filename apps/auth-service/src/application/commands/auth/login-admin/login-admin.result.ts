@@ -1,11 +1,3 @@
-import { UserRole } from '@libs/database';
+import { AdminAuthResponseDto } from '@libs/common';
 
-export class LoginAdminResult {
-  accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: UserRole;
-  };
-}
+export class LoginAdminResult extends AdminAuthResponseDto {}

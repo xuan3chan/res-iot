@@ -14,15 +14,10 @@ export class RegisterAdminFaceHandler implements ICommandHandler<
 
   async execute(command: RegisterAdminFaceCommand): Promise<RegisterAdminFaceResult> {
     const { adminId, file } = command;
-    let buffer = file.buffer;
-
-    // Handle case where buffer is passed as object from Kafka
-    if (file.buffer && (file.buffer as any).type === 'Buffer') {
-      buffer = Buffer.from((file.buffer as any).data);
-    } else if (file.buffer && (file.buffer as any).data) {
-      // Fallback or variation
-      buffer = Buffer.from((file.buffer as any).data);
-    }
+    // Convert buffer object from Kafka (which might be a JSON object with type 'Buffer' and data array) back to Buffer
+    const buffer = Buffer.isBuffer(file.buffer)
+      ? file.buffer
+      : Buffer.from((file.buffer as any).data || file.buffer);
 
     return this.faceVerificationService.registerAdminFace(adminId, buffer, file.originalname);
   }
