@@ -1,25 +1,21 @@
-import { UserRole } from '@libs/database';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserResponseDto {
-    @ApiProperty()
-    id: string;
+  @ApiProperty()
+  id: string;
 
-    @ApiProperty()
-    email: string;
+  @ApiProperty()
+  email: string;
 
-    @ApiProperty()
-    name: string;
+  @ApiProperty()
+  name: string;
 
-    @ApiProperty({ enum: UserRole })
-    role: UserRole;
+  @ApiProperty()
+  isActive: boolean;
 
-    @ApiProperty()
-    isActive: boolean;
+  @ApiProperty()
+  createdAt: Date;
 
-    @ApiProperty()
-    createdAt: Date;
-
-    @ApiProperty()
-    updatedAt: Date;
+  @ApiProperty()
+  updatedAt: Date;
 }

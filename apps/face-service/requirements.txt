@@ -7,3 +7,6 @@ onnxruntime==1.16.3
 insightface==0.7.3
 pydantic>=2.0.0
 slowapi>=0.1.9
+SQLAlchemy==2.0.25
+psycopg2-binary==2.9.9
+pgvector==0.2.4

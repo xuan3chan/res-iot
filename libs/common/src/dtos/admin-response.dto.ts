@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { AdminRole } from '../enums/role.enum';
 
 export class AdminResponseDto {
   @ApiProperty()
@@ -12,6 +13,9 @@ export class AdminResponseDto {
 
   @ApiProperty()
   name: string;
+
+  @ApiProperty({ enum: AdminRole })
+  role: AdminRole;
 
   @ApiProperty()
   isActive: boolean;

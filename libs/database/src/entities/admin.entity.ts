@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { AdminRole } from '@libs/common';
 
 @Entity('admins')
 export class Admin {
@@ -23,11 +24,15 @@ export class Admin {
   @Column({ length: 100 })
   name: string;
 
+  @Column({
+    type: 'enum',
+    enum: AdminRole,
+    default: AdminRole.ADMIN,
+  })
+  role: AdminRole;
+
   @Column({ default: true })
   isActive: boolean;
-
-  @Column({ type: 'jsonb', nullable: true })
-  faceVector: number[] | null;
 
   @Column({ default: false })
   hasFaceRegistered: boolean;

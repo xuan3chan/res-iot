@@ -1,17 +1,9 @@
 // User & Auth Types
 
-export enum UserRole {
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  KITCHEN_STAFF = 'kitchen_staff',
-  WAITER = 'waiter',
-}
-
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -26,7 +18,6 @@ export interface RegisterDto {
   email: string;
   password: string;
   name: string;
-  role?: UserRole;
 }
 
 export interface AuthResponse {
@@ -44,7 +35,7 @@ export interface TableSessionAuth {
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: UserRole;
+  role?: string; // Optional, only present for admin tokens
   iat?: number;
   exp?: number;
 }

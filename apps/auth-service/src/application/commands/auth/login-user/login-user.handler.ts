@@ -37,7 +37,8 @@ export class LoginUserHandler implements ICommandHandler<LoginUserCommand, Login
       throw new UnauthorizedException('User account is inactive');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    // User tokens don't include role
+    const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload);
 
     return {
@@ -46,7 +47,6 @@ export class LoginUserHandler implements ICommandHandler<LoginUserCommand, Login
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
       },
     };
   }

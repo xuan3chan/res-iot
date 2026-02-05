@@ -3,28 +3,37 @@ import cv2
 from typing import List, Tuple
 from utils import calculate_frame_sharpness
 
+from constants import LivenessThreshold, LivenessScore
+
 class LivenessDetector:
     def __init__(self):
         # Thresholds
-        self.LIVENESS_THRESHOLD = 0.7
-        self.VARIANCE_THRESHOLD = 100.0  # Minimum pixel variance between frames
+        self.LIVENESS_THRESHOLD = LivenessThreshold.PASS_SCORE.value
+        self.VARIANCE_THRESHOLD = LivenessThreshold.MIN_VARIANCE.value
         
     def check_liveness(self, frames: List[np.ndarray], challenge_passed: bool) -> Tuple[bool, float]:
         """
         Perform liveness detection on a sequence of frames.
         Returns: (is_live, score)
         """
+        print(f"[Liveness] Checking liveness: challenge_passed={challenge_passed}, num_frames={len(frames)}")
+        
         if not challenge_passed:
+            print("[Liveness] FAILED: challenge_passed is False")
             return False, 0.0
             
         if len(frames) < 10:
+            print(f"[Liveness] FAILED: Not enough frames ({len(frames)} < 10)")
             return False, 0.0
             
         # 1. Variance Check (Anti-static photo)
         # Check if frames are identical (screen replay / static photo)
         variance_score = self._calculate_sequence_variance(frames)
+        print(f"[Liveness] Variance score: {variance_score:.2f} (threshold: {self.VARIANCE_THRESHOLD})")
+        
         if variance_score < self.VARIANCE_THRESHOLD:
-            return False, 0.1  # Low score for static input
+            print(f"[Liveness] FAILED: Variance too low ({variance_score:.2f} < {self.VARIANCE_THRESHOLD})")
+            return False, LivenessScore.STATIC_PENALTY.value  # Low score for static input
             
         # 2. Challenge Verification (Client passed basic check, we verify consistency)
         # In a full implementation, we would re-verify the specific challenge (e.g. detect blink)
@@ -32,18 +41,21 @@ class LivenessDetector:
         
         # Calculate final score
         # Base score starts high if challenge passed
-        score = 0.6 if challenge_passed else 0.0
+        score = LivenessScore.BASE_PASS.value if challenge_passed else 0.0
         
         # Add boost for variance (natural movement)
-        if variance_score > 500:
-            score += 0.3
-        elif variance_score > 200:
-            score += 0.15
+        if variance_score > LivenessThreshold.HIGH_VARIANCE.value:
+            score += LivenessScore.BOOST_HIGH.value
+            print(f"[Liveness] Added {LivenessScore.BOOST_HIGH.value} boost for high variance (>{LivenessThreshold.HIGH_VARIANCE.value})")
+        elif variance_score > LivenessThreshold.MIN_VARIANCE.value:
+            score += LivenessScore.BOOST_MODERATE.value
+            print(f"[Liveness] Added {LivenessScore.BOOST_MODERATE.value} boost for moderate variance (>{LivenessThreshold.MIN_VARIANCE.value})")
             
         # Cap score at 1.0
         score = min(score, 1.0)
         
         is_live = score >= self.LIVENESS_THRESHOLD
+        print(f"[Liveness] Final score: {score:.2f}, threshold: {self.LIVENESS_THRESHOLD}, is_live: {is_live}")
         
         return is_live, score
         

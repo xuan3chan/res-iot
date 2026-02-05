@@ -6,7 +6,6 @@ import { RegisterUserCommand } from './register-user.command';
 import { UserResponseDto } from '@libs/common';
 import { RegisterUserResult } from './register-user.result';
 import { IUserRepository } from '../../../../infrastructure/interfaces/user.repository.interface';
-import { UserRole } from '@libs/database';
 
 @CommandHandler(RegisterUserCommand)
 export class RegisterUserHandler implements ICommandHandler<
@@ -27,8 +26,7 @@ export class RegisterUserHandler implements ICommandHandler<
       throw new ConflictException('Email already exists');
     }
 
-    // Generate username from email suffix if not provided (though CreateUserDto doesn't have username, User entity does)
-    // We'll auto-generate username from email
+    // Generate username from email suffix if not provided
     let username = createUserDto.email.split('@')[0];
     const existingUsername = await this.userRepository.findByUsername(username);
     if (existingUsername) {
@@ -44,11 +42,10 @@ export class RegisterUserHandler implements ICommandHandler<
       username,
       password: hashedPassword,
       name: createUserDto.name,
-      role: createUserDto.role || UserRole.WAITER, // Default to WAITER if not specified
     });
 
-    // Generate JWT token
-    const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
+    // Generate JWT token (user tokens don't include role)
+    const payload = { sub: newUser.id, email: newUser.email };
     const accessToken = this.jwtService.sign(payload);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

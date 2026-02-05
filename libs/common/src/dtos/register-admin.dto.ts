@@ -1,5 +1,6 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AdminRole } from '../enums/role.enum';
 
 export class RegisterAdminDto {
   @ApiProperty({ example: 'admin@example.com', description: 'Admin email' })
@@ -25,4 +26,9 @@ export class RegisterAdminDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @ApiPropertyOptional({ enum: AdminRole, description: 'Admin role', default: AdminRole.ADMIN })
+  @IsEnum(AdminRole)
+  @IsOptional()
+  role?: AdminRole;
 }

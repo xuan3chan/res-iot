@@ -5,7 +5,6 @@ import { CreateUserCommand } from './create-user.command';
 import { CreateUserResult } from './create-user.result';
 import { UserResponseDto } from '@libs/common';
 import { IUserRepository } from '../../../../infrastructure/interfaces/user.repository.interface';
-import { UserRole } from '@libs/database';
 
 @CommandHandler(CreateUserCommand)
 export class CreateUserHandler implements ICommandHandler<CreateUserCommand, CreateUserResult> {
@@ -24,7 +23,6 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand, Cre
     const newUser = await this.userRepository.create({
       ...createUserDto,
       password: hashedPassword,
-      role: createUserDto.role || UserRole.CUSTOMER, // Default role if not provided
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

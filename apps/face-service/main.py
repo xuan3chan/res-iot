@@ -13,8 +13,17 @@ from models import (
     LivenessCheckRequest, LivenessCheckResponse,
     ExtractVectorRequest, ExtractVectorResponse,
     CompareVectorsRequest, CompareVectorsResponse,
-    VerifyFaceRequest, VerifyFaceResponse
+    VerifyFaceRequest, VerifyFaceResponse,
+    RegisterFaceRequest, RegisterFaceResponse,
+    IdentifyFaceRequest, IdentifyFaceResponse
 )
+from database import engine, get_db
+import db_models
+from sqlalchemy.orm import Session
+from fastapi import Depends
+
+# Create tables
+db_models.Base.metadata.create_all(bind=engine)
 from liveness import anti_spoof_check
 from utils import decode_base64_frame, calculate_frame_sharpness, cosine_similarity
 
@@ -247,6 +256,150 @@ async def verify_face_endpoint(request: Request, body: VerifyFaceRequest):
         "match": match,
         "decision": decision
     }
+
+@app.post("/faces/register", response_model=RegisterFaceResponse)
+async def register_face(body: RegisterFaceRequest, db: Session = Depends(get_db)):
+    """
+    Register a face for a user/admin.
+    """
+    if face_app is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    # 1. Extract vector from frames
+    best_vector = None
+    best_score = -1.0
+    
+    for b64_frame in body.frames:
+        try:
+            img = decode_base64_frame(b64_frame)
+            faces = face_app.get(img)
+            if len(faces) >= 1:
+                face = faces[0]
+                quality = face.det_score * 100 + 100.0 # simplified quality
+                if quality > best_score:
+                    best_score = quality
+                    best_vector = face.embedding.tolist()
+        except:
+            continue
+            
+    if best_vector is None:
+        raise HTTPException(status_code=400, detail="No face detected in registration frames")
+
+    # 2. Check if already exists
+    existing_face = db.query(db_models.Face).filter(db_models.Face.external_id == body.external_id).first()
+    if existing_face:
+        # Update existing
+        existing_face.embedding = best_vector
+        existing_face.type = body.type
+        db.commit()
+        db.refresh(existing_face)
+        return {"success": True, "face_id": existing_face.id, "external_id": existing_face.external_id}
+
+    # 3. Save new face
+    new_face = db_models.Face(
+        external_id=body.external_id,
+        type=body.type,
+        embedding=best_vector
+    )
+    db.add(new_face)
+    db.commit()
+    db.refresh(new_face)
+    
+    return {"success": True, "face_id": new_face.id, "external_id": new_face.external_id}
+
+@app.post("/faces/identify", response_model=IdentifyFaceResponse)
+async def identify_face(body: IdentifyFaceRequest, db: Session = Depends(get_db)):
+    """
+    Identify a user from frames by comparing against ALL registered faces.
+    """
+    if face_app is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+        
+    # 1. Liveness Check (Optional but recommended)
+    decoded_frames = []
+    try:
+        decoded_frames = [decode_base64_frame(f) for f in body.frames]
+        is_live, liveness_score = anti_spoof_check(decoded_frames, body.challenge_passed)
+        if not is_live:
+             return {
+                "success": False,
+                "is_live": False,
+                "similarity": 0.0,
+                "distance": 1.0
+            }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # 2. Extract Vector
+    best_vector = None
+    best_score = -1.0
+    
+    for idx, img in enumerate(decoded_frames):
+        try:
+            faces = face_app.get(img)
+            if len(faces) >= 1:
+                face = faces[0]
+                quality = face.det_score
+                if quality > best_score:
+                    best_score = quality
+                    best_vector = face.embedding.tolist()
+        except:
+            continue
+
+    if best_vector is None:
+        return {
+            "success": False,
+            "is_live": True,
+            "similarity": 0.0,
+            "distance": 1.0
+        }
+
+    # 3. Match against DB (Linear Scan for now)
+    # TODO: Use PgVector for efficiency
+    all_faces = db.query(db_models.Face).all()
+    
+    best_match = None
+    min_dist = 1.0
+    max_sim = 0.0
+    
+    for face in all_faces:
+        sim = cosine_similarity(best_vector, face.embedding)
+        dist = 1.0 - sim
+        
+        if dist < min_dist:
+            min_dist = dist
+            max_sim = sim
+            best_match = face
+            
+    # Thresholds
+    threshold = 0.35 # SAME_PERSON_THRESHOLD from constants (can be passed in)
+    
+    if best_match and min_dist < threshold:
+        return {
+            "success": True,
+            "external_id": best_match.external_id,
+            "type": best_match.type,
+            "similarity": float(max_sim),
+            "distance": float(min_dist),
+            "is_live": True
+        }
+        
+    return {
+        "success": False,
+        "similarity": float(max_sim),
+        "distance": float(min_dist),
+        "is_live": True
+    }
+
+@app.delete("/faces/{external_id}")
+async def delete_face(external_id: str, db: Session = Depends(get_db)):
+    face = db.query(db_models.Face).filter(db_models.Face.external_id == external_id).first()
+    if not face:
+        raise HTTPException(status_code=404, detail="Face not found")
+    
+    db.delete(face)
+    db.commit()
+    return {"success": True, "deleted_id": external_id}
 
 if __name__ == "__main__":
     import uvicorn

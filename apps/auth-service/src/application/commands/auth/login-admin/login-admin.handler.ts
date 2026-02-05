@@ -39,7 +39,7 @@ export class LoginAdminHandler implements ICommandHandler<LoginAdminCommand, Log
     const accessToken = this.jwtService.sign(payload);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password,faceVector, ...adminWithoutPassword } = admin;
+    const { password, ...adminWithoutPassword } = admin;
 
     return {
       accessToken,

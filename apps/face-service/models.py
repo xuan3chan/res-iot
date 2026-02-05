@@ -1,37 +1,38 @@
-from typing import List, Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from typing import List, Optional
 
+# --- Liveness Schemas ---
 class LivenessCheckRequest(BaseModel):
-    frames: List[str] = Field(..., min_length=10, description="List of base64 encoded frames (minimum 10)")
-    challenge_type: Literal["BLINK", "TURN_HEAD", "OPEN_MOUTH", "READ_NUMBER"]
+    frames: List[str]
     challenge_passed: bool
 
 class LivenessCheckResponse(BaseModel):
     is_live: bool
     liveness_score: float
 
+# --- Vector Schemas ---
 class ExtractVectorRequest(BaseModel):
-    frames: List[str] = Field(..., min_length=1, description="List of base64 encoded frames")
+    frames: List[str]
 
 class ExtractVectorResponse(BaseModel):
-    vector: List[float] = Field(..., description="512-dimensional face embedding")
-    frame_index: int = Field(..., description="Index of the frame used for extraction")
+    vector: List[float]
+    frame_index: int
 
 class CompareVectorsRequest(BaseModel):
-    vector1: List[float] = Field(..., min_length=512, max_length=512)
-    vector2: List[float] = Field(..., min_length=512, max_length=512)
+    vector1: List[float]
+    vector2: List[float]
 
 class CompareVectorsResponse(BaseModel):
     similarity: float
     distance: float
     match: bool
-    is_same_person: bool # keeping for backward compatibility if needed, but match covers it
+    is_same_person: bool
 
+# --- Verification Schemas ---
 class VerifyFaceRequest(BaseModel):
-    frames: List[str] = Field(..., min_length=10)
-    challenge_type: Literal["BLINK", "TURN_HEAD", "OPEN_MOUTH", "READ_NUMBER"]
+    frames: List[str]
     challenge_passed: bool
-    stored_vector: List[float] = Field(..., min_length=512, max_length=512)
+    stored_vector: List[float]
 
 class VerifyFaceResponse(BaseModel):
     is_live: bool
@@ -39,4 +40,27 @@ class VerifyFaceResponse(BaseModel):
     similarity: float
     distance: float
     match: bool
-    decision: Literal["LOGIN_SUCCESS", "REQUIRE_STEP_UP", "DENY"]
+    decision: str
+
+# --- NEW: Stateful Schemas ---
+class RegisterFaceRequest(BaseModel):
+    frames: List[str]
+    external_id: str
+    type: str  # 'USER' or 'ADMIN'
+
+class RegisterFaceResponse(BaseModel):
+    success: bool
+    face_id: str
+    external_id: str
+
+class IdentifyFaceRequest(BaseModel):
+    frames: List[str]
+    challenge_passed: bool = True # Default to True for simple identify, or require liveness
+
+class IdentifyFaceResponse(BaseModel):
+    success: bool
+    external_id: Optional[str] = None
+    type: Optional[str] = None
+    similarity: float
+    distance: float
+    is_live: bool

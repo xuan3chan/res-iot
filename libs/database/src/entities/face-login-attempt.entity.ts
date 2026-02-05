@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Admin } from './admin.entity';
 
 export enum FaceLoginResult {
   SUCCESS = 'SUCCESS',
@@ -27,6 +28,13 @@ export class FaceLoginAttempt {
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'userId' })
   user: User | null;
+
+  @Column({ nullable: true })
+  adminId: string | null;
+
+  @ManyToOne(() => Admin, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'adminId' })
+  admin: Admin | null;
 
   @Column({ length: 50 })
   ipAddress: string;

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, Admin, FaceLoginAttempt, FaceLoginResult } from '@libs/database';
-import { VerifyWithLivenessResult } from '@libs/common';
+import { VerifyWithLivenessResult, FaceVerificationConfig } from '@libs/common';
 import axios from 'axios';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -21,10 +21,6 @@ interface FaceServiceVerifyResponse {
 @Injectable()
 export class FaceVerificationService {
   private readonly faceServiceUrl: string;
-
-  // Thresholds per spec
-  private readonly SAME_PERSON_THRESHOLD = 0.35;
-  private readonly STEP_UP_THRESHOLD = 0.45;
 
   constructor(
     private readonly configService: ConfigService,
@@ -45,14 +41,18 @@ export class FaceVerificationService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    const vector = await this.extractVector(imageBuffer, filename);
-    if (!vector) {
-      throw new HttpException('No face detected', HttpStatus.BAD_REQUEST);
+    try {
+      await axios.post(`${this.faceServiceUrl}/faces/register`, {
+        frames: [imageBuffer.toString('base64')],
+        external_id: userId,
+        type: 'USER',
+      });
+    } catch (error) {
+      console.error('Face Service Register Error:', error.message);
+      throw new HttpException('Failed to register face', HttpStatus.BAD_REQUEST);
     }
 
-    user.faceVector = vector;
     user.hasFaceRegistered = true;
-
     return this.userRepository.save(user);
   }
 
@@ -62,19 +62,23 @@ export class FaceVerificationService {
       throw new HttpException('Admin not found', HttpStatus.NOT_FOUND);
     }
 
-    const vector = await this.extractVector(imageBuffer, filename);
-    if (!vector) {
-      throw new HttpException('No face detected', HttpStatus.BAD_REQUEST);
+    try {
+      await axios.post(`${this.faceServiceUrl}/faces/register`, {
+        frames: [imageBuffer.toString('base64')],
+        external_id: adminId,
+        type: 'ADMIN',
+      });
+    } catch (error) {
+      console.error('Face Service Register Error:', error.message);
+      throw new HttpException('Failed to register face', HttpStatus.BAD_REQUEST);
     }
 
-    admin.faceVector = vector;
     admin.hasFaceRegistered = true;
-
     return this.adminRepository.save(admin);
   }
 
   /**
-   * New method: Verify face with liveness detection using multi-frame
+   * Verify face with liveness detection using stateful Face Service
    */
   async verifyFaceWithLiveness(
     frames: string[],
@@ -83,154 +87,134 @@ export class FaceVerificationService {
     ipAddress: string,
     deviceId?: string
   ): Promise<VerifyWithLivenessResult> {
-    // 1. Get all users and admins with registered faces
-    const [usersWithFaces, adminsWithFaces] = await Promise.all([
-      this.userRepository.find({
-        where: { hasFaceRegistered: true },
-        select: ['id', 'name', 'faceVector', 'role'], // include role
-      }),
-      this.adminRepository.find({
-        where: { hasFaceRegistered: true },
-        select: ['id', 'name', 'faceVector'], // Admin doesn't have role enum field, it's just Admin
-      }),
-    ]);
+    try {
+      // Call Identify API
+      const response = await axios.post(`${this.faceServiceUrl}/faces/identify`, {
+        frames,
+        challenge_passed: challengePassed,
+      });
 
-    const allAccounts = [
-      ...usersWithFaces.map((u) => ({ ...u, type: 'USER' })),
-      ...adminsWithFaces.map((a) => ({ ...a, type: 'ADMIN', role: 'admin' })), // Map admin to unified structure
-    ];
+      const { success, external_id, type, is_live, similarity, distance } = response.data;
+      const livenessScore = is_live ? 1.0 : 0.0; // API simplifies generic liveness score return in this endpoint
 
-    if (allAccounts.length === 0) {
-      await this.logAttempt(null, ipAddress, deviceId, 0, null, null, FaceLoginResult.NO_MATCH);
-      return {
-        success: false,
-        decision: 'DENY',
-        isLive: false,
-        livenessScore: 0,
-        message: 'No registered faces in system',
-      };
-    }
-
-    // 2. For each account, call Face Service /verify-face with stored vector
-    // Find the best match
-    let bestMatch: { account: any; response: FaceServiceVerifyResponse } | null = null;
-    let bestDistance = Infinity;
-
-    for (const account of allAccounts) {
-      let storedVector = account.faceVector;
-      if (typeof storedVector === 'string') {
-        try {
-          storedVector = JSON.parse(storedVector);
-        } catch {
-          continue;
-        }
-      }
-
-      if (!Array.isArray(storedVector) || storedVector.length !== 512) {
-        continue;
-      }
-
-      try {
-        const response = await axios.post<FaceServiceVerifyResponse>(
-          `${this.faceServiceUrl}/verify-face`,
-          {
-            frames,
-            challenge_type: challengeType,
-            challenge_passed: challengePassed,
-            stored_vector: storedVector,
-          }
+      if (!success || !external_id) {
+        // No match found
+        await this.logAttempt(
+          null,
+          null,
+          ipAddress,
+          deviceId,
+          livenessScore,
+          similarity,
+          distance,
+          FaceLoginResult.NO_MATCH
         );
-
-        const data = response.data;
-
-        // Only consider if liveness passed
-        if (data.is_live && data.distance < bestDistance) {
-          bestDistance = data.distance;
-          bestMatch = { account, response: data };
-        }
-      } catch (error) {
-        console.error(`[FaceLogin] Error verifying against account ${account.id}:`, error.message);
-        continue;
+        return {
+          success: false,
+          decision: 'DENY',
+          isLive: is_live,
+          livenessScore: livenessScore,
+          message: 'No matching face found',
+          similarity,
+          distance,
+        };
       }
-    }
 
-    // 3. Determine result based on best match
-    if (!bestMatch) {
+      // Match found, fetch user/admin details
+      let account: any = null;
+      if (type === 'USER') {
+        account = await this.userRepository.findOne({ where: { id: external_id } });
+        if (account) {
+          account.type = 'USER';
+          account.role = 'user'; // legacy role mapping
+        }
+      } else if (type === 'ADMIN') {
+        account = await this.adminRepository.findOne({ where: { id: external_id } });
+        if (account) {
+          account.type = 'ADMIN';
+        }
+      }
+
+      if (!account) {
+        // Orphaned face record?
+        return {
+          success: false,
+          decision: 'DENY',
+          isLive: is_live,
+          livenessScore: livenessScore,
+          message: 'Account not found for matched face',
+        };
+      }
+
+      // Determine result based on config thresholds (Auth Service still decides policy)
+      let result: FaceLoginResult;
+      let decision: 'LOGIN_SUCCESS' | 'REQUIRE_STEP_UP' | 'DENY';
+
+      if (distance < FaceVerificationConfig.SAME_PERSON_THRESHOLD) {
+        result = FaceLoginResult.SUCCESS;
+        decision = 'LOGIN_SUCCESS';
+      } else if (distance <= FaceVerificationConfig.STEP_UP_THRESHOLD) {
+        result = FaceLoginResult.REQUIRE_STEP_UP;
+        decision = 'REQUIRE_STEP_UP';
+      } else {
+        result = FaceLoginResult.NO_MATCH;
+        decision = 'DENY';
+      }
+
       await this.logAttempt(
-        null,
+        account.id,
+        type,
         ipAddress,
         deviceId,
-        0,
-        null,
-        null,
-        FaceLoginResult.LIVENESS_FAIL
+        livenessScore,
+        similarity,
+        distance,
+        result
       );
+
+      return {
+        success: decision === 'LOGIN_SUCCESS',
+        decision,
+        user:
+          decision === 'LOGIN_SUCCESS'
+            ? {
+                id: account.id,
+                email: account.email,
+                username: account.username,
+                name: account.name,
+                role: account.type === 'ADMIN' ? 'admin' : account.role,
+                hasFaceRegistered: account.hasFaceRegistered,
+                createdAt: account.createdAt,
+                updatedAt: account.updatedAt,
+              }
+            : undefined,
+        userId: account.id,
+        userName: account.name,
+        role: account.type === 'ADMIN' ? 'admin' : account.role,
+        isLive: is_live,
+        livenessScore: livenessScore,
+        similarity,
+        distance,
+        message:
+          decision === 'LOGIN_SUCCESS'
+            ? 'Face login successful'
+            : decision === 'REQUIRE_STEP_UP'
+              ? 'Additional verification required'
+              : 'Face does not match',
+      };
+    } catch (error) {
+      console.error('[FaceLogin] Error:', error.message);
+      // Fallback
+      await this.logAttempt(null, null, ipAddress, deviceId, 0, null, null, FaceLoginResult.ERROR);
+
       return {
         success: false,
         decision: 'DENY',
         isLive: false,
         livenessScore: 0,
-        message: 'Liveness check failed or no face detected',
+        message: 'Face service error',
       };
     }
-
-    const { account, response } = bestMatch;
-
-    // Log the attempt
-    let result: FaceLoginResult;
-    let decision: 'LOGIN_SUCCESS' | 'REQUIRE_STEP_UP' | 'DENY';
-
-    if (response.distance < this.SAME_PERSON_THRESHOLD) {
-      result = FaceLoginResult.SUCCESS;
-      decision = 'LOGIN_SUCCESS';
-    } else if (response.distance <= this.STEP_UP_THRESHOLD) {
-      result = FaceLoginResult.REQUIRE_STEP_UP;
-      decision = 'REQUIRE_STEP_UP';
-    } else {
-      result = FaceLoginResult.NO_MATCH;
-      decision = 'DENY';
-    }
-
-    await this.logAttempt(
-      account.id,
-      ipAddress,
-      deviceId,
-      response.liveness_score,
-      response.similarity,
-      response.distance,
-      result
-    );
-
-    return {
-      success: decision === 'LOGIN_SUCCESS',
-      decision,
-      user:
-        decision === 'LOGIN_SUCCESS'
-          ? {
-              id: account.id,
-              email: account.email,
-              username: account.username,
-              name: account.name,
-              role: account.type === 'ADMIN' ? 'admin' : account['role'],
-              hasFaceRegistered: account.hasFaceRegistered,
-              createdAt: account.createdAt,
-              updatedAt: account.updatedAt,
-            }
-          : undefined,
-      userId: account.id,
-      userName: account.name,
-      role: account.type === 'ADMIN' ? 'admin' : account['role'], // Return unified role
-      isLive: response.is_live,
-      livenessScore: response.liveness_score,
-      similarity: response.similarity,
-      distance: response.distance,
-      message:
-        decision === 'LOGIN_SUCCESS'
-          ? 'Face login successful'
-          : decision === 'REQUIRE_STEP_UP'
-            ? 'Additional verification required'
-            : 'Face does not match',
-    };
   }
 
   // ... keep registerFace, verifyFace legacy, logAttempt, cosineSimilarity same
@@ -243,47 +227,7 @@ export class FaceVerificationService {
     imageBuffer: Buffer,
     filename: string
   ): Promise<{ user: User; similarity: number } | null> {
-    const vector = await this.extractVector(imageBuffer, filename);
-    if (!vector) {
-      throw new HttpException('No face detected', HttpStatus.BAD_REQUEST);
-    }
-
-    const closestUser = await this.userRepository
-      .createQueryBuilder('user')
-      .orderBy(`user.faceVector <=> :vector`, 'ASC')
-      .setParameters({ vector: JSON.stringify(vector) })
-      .limit(1)
-      .getOne();
-
-    if (!closestUser) {
-      return null;
-    }
-
-    let userVector = closestUser.faceVector;
-
-    if (typeof userVector === 'string') {
-      try {
-        userVector = JSON.parse(userVector);
-      } catch (e) {
-        console.error(`[VerifyFace] Failed to parse vector for user ${closestUser.id}`);
-        return null;
-      }
-    }
-
-    if (!Array.isArray(userVector)) {
-      console.log(`[VerifyFace] User vector is NOT array: ${JSON.stringify(userVector)}`);
-      return null;
-    }
-
-    const similarity = this.cosineSimilarity(vector, userVector as number[]);
-    console.log(`[VerifyFace] User ${closestUser.id} similarity: ${similarity}`);
-
-    // Use new threshold based on distance (1 - similarity)
-    const distance = 1 - similarity;
-    if (distance < this.SAME_PERSON_THRESHOLD) {
-      return { user: closestUser, similarity };
-    }
-
+    // Implement using Identify if needed, or deprecate
     return null;
   }
 
@@ -308,7 +252,8 @@ export class FaceVerificationService {
   }
 
   private async logAttempt(
-    userId: string | null,
+    accountId: string | null,
+    accountType: 'USER' | 'ADMIN' | null,
     ipAddress: string,
     deviceId: string | null | undefined,
     livenessScore: number,
@@ -318,7 +263,8 @@ export class FaceVerificationService {
   ): Promise<void> {
     try {
       const attempt = this.faceLoginAttemptRepository.create({
-        userId,
+        userId: accountType === 'USER' ? accountId : null,
+        adminId: accountType === 'ADMIN' ? accountId : null,
         ipAddress,
         deviceId: deviceId || null,
         livenessScore,

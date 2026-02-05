@@ -1,18 +1,36 @@
 name: res-iot
 
 services:
-  postgres:
-    image: pgvector/pgvector:pg15
-    container_name: res-iot-db
+  postgres-auth:
+    image: postgres:15-alpine
+    container_name: res-iot-auth-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
-      POSTGRES_DB: restaurant_iot
+      POSTGRES_DB: res-iot-auth
     ports:
       - '5432:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-face:
+    image: pgvector/pgvector:pg15
+    container_name: res-iot-face-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: res-iot-face
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_face_data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
@@ -80,6 +98,7 @@ services:
       - PYTHONUNBUFFERED=1
 
 volumes:
-  postgres_data:
+  postgres_auth_data:
+  postgres_face_data:
   redis_data:
   kafka_data:
