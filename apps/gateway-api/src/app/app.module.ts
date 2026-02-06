@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthProxyModule } from './auth-proxy/auth-proxy.module';
 import { AdminProxyModule } from './admin-proxy/admin-proxy.module';
+import { ScanProxyModule } from './app/scan-proxy/scan-proxy.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AdminProxyModule } from './admin-proxy/admin-proxy.module';
     }),
     AuthProxyModule,
     AdminProxyModule,
+    ScanProxyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

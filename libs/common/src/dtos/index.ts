@@ -8,3 +8,5 @@ export * from './update-admin.dto';
 export * from './update-user.dto';
 export * from './user-response.dto';
 export * from './auth/face-login.dto';
+export * from './create-target.dto';
+export * from './trigger-scan.dto';

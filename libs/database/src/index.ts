@@ -10,6 +10,9 @@ export * from './entities/table-session.entity';
 export * from './entities/order.entity';
 export * from './entities/order-item.entity';
 export * from './entities/face-login-attempt.entity';
+export * from './entities/target.entity';
+export * from './entities/scan-session.entity';
+export * from './entities/vulnerability.entity';
 
 // Re-export all entities as array for TypeORM
 import { User } from './entities/user.entity';
@@ -23,6 +26,9 @@ import { TableSession } from './entities/table-session.entity';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { FaceLoginAttempt } from './entities/face-login-attempt.entity';
+import { Target } from './entities/target.entity';
+import { ScanSession } from './entities/scan-session.entity';
+import { Vulnerability } from './entities/vulnerability.entity';
 
 export const entities = [
   User,
@@ -36,4 +42,7 @@ export const entities = [
   Order,
   OrderItem,
   FaceLoginAttempt,
+  Target,
+  ScanSession,
+  Vulnerability,
 ];
