@@ -1,5 +1,5 @@
 {
-  "name": "scan-manager",
+  "name": "scan-manager-nested",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/scan-manager/scan-manager/src",
   "projectType": "application",
@@ -32,15 +32,15 @@
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
-        "buildTarget": "scan-manager:build",
+        "buildTarget": "scan-manager-nested:build",
         "runBuildTargetDependencies": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "scan-manager:build:development"
+          "buildTarget": "scan-manager-nested:build:development"
         },
         "production": {
-          "buildTarget": "scan-manager:build:production"
+          "buildTarget": "scan-manager-nested:build:production"
         }
       }
     },

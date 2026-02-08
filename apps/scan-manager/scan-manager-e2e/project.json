@@ -1,8 +1,8 @@
 {
-  "name": "scan-manager-e2e",
+  "name": "scan-manager-nested-e2e",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "implicitDependencies": ["scan-manager"],
+  "implicitDependencies": ["scan-manager-nested"],
   "targets": {
     "e2e": {
       "executor": "@nx/jest:jest",
@@ -11,7 +11,7 @@
         "jestConfig": "apps/scan-manager/scan-manager-e2e/jest.config.ts",
         "passWithNoTests": true
       },
-      "dependsOn": ["scan-manager:build"]
+      "dependsOn": ["scan-manager-nested:build"]
     }
   }
 }
