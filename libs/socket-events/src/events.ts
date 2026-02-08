@@ -101,4 +101,4 @@ export const RoomNames = {
   orders: () => 'orders',
 } as const;
 
-export type SocketEventName = typeof SocketEvents[keyof typeof SocketEvents];
+export type SocketEventName = (typeof SocketEvents)[keyof typeof SocketEvents];

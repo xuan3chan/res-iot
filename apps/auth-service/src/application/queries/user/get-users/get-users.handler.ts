@@ -6,16 +6,14 @@ import { IUserRepository } from '../../../../infrastructure/interfaces/user.repo
 
 @QueryHandler(GetUsersQuery)
 export class GetUsersHandler implements IQueryHandler<GetUsersQuery, UserResponseDto[]> {
-    constructor(
-        @Inject('IUserRepository') private readonly userRepository: IUserRepository,
-    ) { }
+  constructor(@Inject('IUserRepository') private readonly userRepository: IUserRepository) {}
 
-    async execute(query: GetUsersQuery): Promise<UserResponseDto[]> {
-        const users = await this.userRepository.findAll();
-        return users.map(user => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { password, ...result } = user;
-            return result as UserResponseDto;
-        });
-    }
+  async execute(query: GetUsersQuery): Promise<UserResponseDto[]> {
+    const users = await this.userRepository.findAll();
+    return users.map((user) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
+      return result as UserResponseDto;
+    });
+  }
 }

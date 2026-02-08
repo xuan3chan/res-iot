@@ -20,19 +20,15 @@ const CommandHandlers = [CreateUserHandler, UpdateUserHandler, DeleteUserHandler
 const QueryHandlers = [GetUserHandler, GetUsersHandler];
 
 @Module({
-    imports: [
-        CqrsModule,
-        TypeOrmModule.forFeature([User]),
-        FaceModule,
-    ],
-    controllers: [UserController],
-    providers: [
-        ...CommandHandlers,
-        ...QueryHandlers,
-        {
-            provide: 'IUserRepository',
-            useClass: UserTypeOrmRepository,
-        },
-    ],
+  imports: [CqrsModule, TypeOrmModule.forFeature([User]), FaceModule],
+  controllers: [UserController],
+  providers: [
+    ...CommandHandlers,
+    ...QueryHandlers,
+    {
+      provide: 'IUserRepository',
+      useClass: UserTypeOrmRepository,
+    },
+  ],
 })
-export class UserModule { }
+export class UserModule {}

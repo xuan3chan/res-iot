@@ -1,7 +1,5 @@
 module.exports = {
-  extends: [
-    './typescript.js',
-  ],
+  extends: ['./typescript.js'],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',

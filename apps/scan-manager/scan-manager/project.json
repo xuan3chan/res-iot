@@ -1,0 +1,55 @@
+{
+  "name": "scan-manager",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/scan-manager/scan-manager/src",
+  "projectType": "application",
+  "tags": ["scope:scan-manager"],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/scan-manager",
+        "main": "apps/scan-manager/scan-manager/src/main.ts",
+        "tsConfig": "apps/scan-manager/scan-manager/tsconfig.app.json",
+        "assets": ["apps/scan-manager/scan-manager/src/assets"],
+        "webpackConfig": "apps/scan-manager/scan-manager/webpack.config.js"
+      },
+      "configurations": {
+        "development": {
+          "minimize": false
+        },
+        "production": {
+          "minimize": true
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "scan-manager:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "scan-manager:build:development"
+        },
+        "production": {
+          "buildTarget": "scan-manager:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/scan-manager/scan-manager/jest.config.ts"
+      }
+    }
+  }
+}

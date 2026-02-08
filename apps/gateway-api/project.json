@@ -1,75 +1,64 @@
 {
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "name": "gateway-api",
-    "sourceRoot": "apps/gateway-api/src",
-    "projectType": "application",
-    "targets": {
-        "build": {
-            "executor": "@nx/webpack:webpack",
-            "outputs": [
-                "{options.outputPath}"
-            ],
-            "defaultConfiguration": "production",
-            "options": {
-                "target": "node",
-                "compiler": "tsc",
-                "outputPath": "dist/apps/gateway-api",
-                "main": "apps/gateway-api/src/main.ts",
-                "tsConfig": "apps/gateway-api/tsconfig.app.json",
-                "webpackConfig": "apps/gateway-api/webpack.config.js",
-                "generatePackageJson": true
-            },
-            "configurations": {
-                "development": {
-                    "optimization": false,
-                    "sourceMap": true
-                },
-                "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false
-                }
-            }
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "gateway-api",
+  "sourceRoot": "apps/gateway-api/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/gateway-api",
+        "main": "apps/gateway-api/src/main.ts",
+        "tsConfig": "apps/gateway-api/tsconfig.app.json",
+        "webpackConfig": "apps/gateway-api/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {
+          "optimization": false,
+          "sourceMap": true
         },
-        "serve": {
-            "executor": "@nx/js:node",
-            "defaultConfiguration": "development",
-            "options": {
-                "buildTarget": "gateway-api:build"
-            },
-            "configurations": {
-                "development": {
-                    "buildTarget": "gateway-api:build:development"
-                },
-                "production": {
-                    "buildTarget": "gateway-api:build:production"
-                }
-            }
-        },
-        "lint": {
-            "executor": "@nx/eslint:lint",
-            "outputs": [
-                "{options.outputFile}"
-            ],
-            "options": {
-                "lintFilePatterns": [
-                    "apps/gateway-api/**/*.ts"
-                ]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": [
-                "{workspaceRoot}/coverage/apps/gateway-api"
-            ],
-            "options": {
-                "jestConfig": "apps/gateway-api/jest.config.ts",
-                "passWithNoTests": true
-            }
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false
         }
+      }
     },
-    "tags": [
-        "service",
-        "gateway"
-    ]
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "gateway-api:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "gateway-api:build:development"
+        },
+        "production": {
+          "buildTarget": "gateway-api:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/gateway-api/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/gateway-api"],
+      "options": {
+        "jestConfig": "apps/gateway-api/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["service", "gateway"]
 }

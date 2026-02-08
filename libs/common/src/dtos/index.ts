@@ -1,3 +1,4 @@
+export * from './auth/face-login.dto';
 export * from './admin-auth-response.dto';
 export * from './admin-response.dto';
 export * from './auth-response.dto';
@@ -7,6 +8,7 @@ export * from './register-admin.dto';
 export * from './update-admin.dto';
 export * from './update-user.dto';
 export * from './user-response.dto';
-export * from './auth/face-login.dto';
-export * from './create-target.dto';
-export * from './trigger-scan.dto';
+export * from './scans';
+
+
+

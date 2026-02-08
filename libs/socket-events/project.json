@@ -1,36 +1,25 @@
 {
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "name": "socket-events",
-    "sourceRoot": "libs/socket-events/src",
-    "projectType": "library",
-    "targets": {
-        "lint": {
-            "executor": "@nx/eslint:lint",
-            "outputs": [
-                "{options.outputFile}"
-            ],
-            "options": {
-                "lintFilePatterns": [
-                    "libs/socket-events/**/*.ts"
-                ]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": [
-                "{workspaceRoot}/coverage/libs/socket-events"
-            ],
-            "options": {
-                "jestConfig": "libs/socket-events/jest.config.ts",
-                "passWithNoTests": true
-            }
-        }
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "socket-events",
+  "sourceRoot": "libs/socket-events/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/socket-events/**/*.ts"]
+      }
     },
-    "tags": [
-        "socket-events",
-        "shared"
-    ],
-    "implicitDependencies": [
-        "types"
-    ]
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/socket-events"],
+      "options": {
+        "jestConfig": "libs/socket-events/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["socket-events", "shared"],
+  "implicitDependencies": ["types"]
 }

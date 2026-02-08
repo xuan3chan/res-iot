@@ -50,11 +50,13 @@ NODE_ENV=development
 ### Run microservices
 
 Start all backend services:
+
 ```bash
 nx run-many --target=serve --projects=auth-service,menu-service,order-service,table-service
 ```
 
 Or start individual services:
+
 ```bash
 nx serve auth-service    # Port 3001
 nx serve menu-service    # Port 3002
@@ -62,41 +64,40 @@ nx serve order-service   # Port 3003
 nx serve table-service   # Port 3004
 ```
 
-
-
 ## Microservices Architecture
 
-| Service | Port | Responsibility |
-|---------|------|----------------|
-| auth-service | 3001 | Authentication, JWT, Users |
-| menu-service | 3002 | Categories, Menu items, Modifiers |
-| order-service | 3003 | Orders, Kitchen, WebSocket |
-| table-service | 3004 | Tables, Sessions |
+| Service       | Port | Responsibility                    |
+| ------------- | ---- | --------------------------------- |
+| auth-service  | 3001 | Authentication, JWT, Users        |
+| menu-service  | 3002 | Categories, Menu items, Modifiers |
+| order-service | 3003 | Orders, Kitchen, WebSocket        |
+| table-service | 3004 | Tables, Sessions                  |
 
 ## Common Commands
 
-| Command | Description |
-|---------|-------------|
-| `nx serve <app>` | Start dev server for an app |
-| `nx build <app>` | Build an app for production |
-| `nx test <project>` | Run tests for a project |
-| `nx lint <project>` | Run ESLint for a project |
-| `nx affected:build` | Build only affected projects |
-| `nx affected:test` | Test only affected projects |
-| `nx graph` | Show project dependency graph |
+| Command             | Description                   |
+| ------------------- | ----------------------------- |
+| `nx serve <app>`    | Start dev server for an app   |
+| `nx build <app>`    | Build an app for production   |
+| `nx test <project>` | Run tests for a project       |
+| `nx lint <project>` | Run ESLint for a project      |
+| `nx affected:build` | Build only affected projects  |
+| `nx affected:test`  | Test only affected projects   |
+| `nx graph`          | Show project dependency graph |
 
 ## Shared Libraries
 
-| Library | Description |
-|---------|-------------|
-| `@libs/database` | TypeORM entities (User, Order, Table, etc.) |
-| `@libs/common` | Guards, Filters, Decorators |
-| `@libs/types` | TypeScript interfaces |
-| `@libs/socket-events` | WebSocket event definitions |
+| Library               | Description                                 |
+| --------------------- | ------------------------------------------- |
+| `@libs/database`      | TypeORM entities (User, Order, Table, etc.) |
+| `@libs/common`        | Guards, Filters, Decorators                 |
+| `@libs/types`         | TypeScript interfaces                       |
+| `@libs/socket-events` | WebSocket event definitions                 |
 
 ## API Documentation
 
 Each service has Swagger documentation available at:
+
 - Auth: http://localhost:3001/api/auth/docs
 - Menu: http://localhost:3002/api/menu/docs
 - Order: http://localhost:3003/api/orders/docs

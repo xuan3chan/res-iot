@@ -1,27 +1,42 @@
 export const KAFKA_TOPICS = {
   AUTH: {
-    LOGIN: 'auth.admin_login',
+    LOGIN: 'auth.login',
+    REGISTER: 'auth.register',
+    USER_LOGIN: 'auth.user.login',
+    USER_REGISTER: 'auth.user.register',
     LOGOUT: 'auth.logout',
-    REGISTER: 'auth.admin_register',
-    USER_LOGIN: 'auth.user_login',
-    USER_REGISTER: 'auth.user_register',
-    FACE_LOGIN: 'auth.face-login', // Moved here - authentication for both User and Admin
+    FACE_LOGIN: 'auth.face.login',
   },
   USER: {
     CREATE: 'user.create',
-    FIND_ALL: 'user.findAll',
-    FIND_ONE: 'user.findOne',
+    FIND_ALL: 'user.find_all',
+    FIND_ONE: 'user.find_one',
     UPDATE: 'user.update',
     DELETE: 'user.delete',
-    REGISTER_FACE: 'user.register-face',
-    VERIFY_FACE: 'user.verify-face',
+    REGISTER_FACE: 'user.register_face',
+    VERIFY_FACE: 'user.verify_face',
   },
   ADMIN: {
     CREATE: 'admin.create',
-    FIND_ALL: 'admin.findAll',
-    FIND_ONE: 'admin.findOne',
+    FIND_ALL: 'admin.find_all',
+    FIND_ONE: 'admin.find_one',
     UPDATE: 'admin.update',
     DELETE: 'admin.delete',
-    REGISTER_FACE: 'admin.register-face',
+    REGISTER_FACE: 'admin.register_face',
+  },
+  SCAN: {
+    TARGET: {
+      CREATE: 'scan.target.create',
+      FIND_ALL: 'scan.target.find_all',
+    },
+    SCAN: {
+      CREATE: 'scan.create',
+      FIND_ALL: 'scan.find_all',
+      FIND_ONE: 'scan.find_one',
+      GET_REPORT: 'scan.get_report',
+    },
+    SCAN_JOB: {
+      START: 'scan.job.start',
+    },
   },
 } as const;

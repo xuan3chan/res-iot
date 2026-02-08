@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthProxyModule } from './auth-proxy/auth-proxy.module';
 import { AdminProxyModule } from './admin-proxy/admin-proxy.module';
-import { ScanProxyModule } from './app/scan-proxy/scan-proxy.module';
+import { ScansProxyModule } from './scans-proxy/scans-proxy.module';
 
 @Module({
   imports: [
@@ -15,7 +14,7 @@ import { ScanProxyModule } from './app/scan-proxy/scan-proxy.module';
     }),
     AuthProxyModule,
     AdminProxyModule,
-    ScanProxyModule,
+    ScansProxyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

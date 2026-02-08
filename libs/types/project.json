@@ -1,33 +1,24 @@
 {
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "name": "types",
-    "sourceRoot": "libs/types/src",
-    "projectType": "library",
-    "targets": {
-        "lint": {
-            "executor": "@nx/eslint:lint",
-            "outputs": [
-                "{options.outputFile}"
-            ],
-            "options": {
-                "lintFilePatterns": [
-                    "libs/types/**/*.ts"
-                ]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": [
-                "{workspaceRoot}/coverage/libs/types"
-            ],
-            "options": {
-                "jestConfig": "libs/types/jest.config.ts",
-                "passWithNoTests": true
-            }
-        }
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "types",
+  "sourceRoot": "libs/types/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/types/**/*.ts"]
+      }
     },
-    "tags": [
-        "types",
-        "shared"
-    ]
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/types"],
+      "options": {
+        "jestConfig": "libs/types/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["types", "shared"]
 }
